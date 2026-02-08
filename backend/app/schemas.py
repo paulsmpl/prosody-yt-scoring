@@ -12,7 +12,7 @@ class AnalyzeRequest(BaseModel):
 
 
 class AnalyzeResult(BaseModel):
-    url: HttpUrl
+    url: str
     start_minute: int
     end_minute: int
     melody_score: float
