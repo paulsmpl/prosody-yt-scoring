@@ -2,7 +2,7 @@ services:
   web:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./backend/app/storage:/app/app/storage
     environment:
