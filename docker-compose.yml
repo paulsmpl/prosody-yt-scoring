@@ -1,0 +1,11 @@
+services:
+  web:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app/storage:/app/app/storage
+    environment:
+      - STORAGE_DIR=/app/app/storage
+      - WEIGHT_MELODY=0.5
+      - WEIGHT_FREQUENCY=0.5
