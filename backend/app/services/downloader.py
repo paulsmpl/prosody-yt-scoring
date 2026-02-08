@@ -7,13 +7,18 @@ def download_audio(url: str, output_dir: Path) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_template = output_dir / "source.%(ext)s"
 
+    cookies_path = os.getenv("COOKIES_PATH")
+    client = "android"
+    if cookies_path and Path(cookies_path).exists():
+        client = "web"
+
     cmd = [
         "yt-dlp",
         "-f",
         "bestaudio/best",
         "--no-playlist",
         "--extractor-args",
-        "youtube:player_client=android",
+        f"youtube:player_client={client}",
         "--print",
         "after_move:filepath",
         "-o",
@@ -21,7 +26,6 @@ def download_audio(url: str, output_dir: Path) -> Path:
         url,
     ]
 
-    cookies_path = os.getenv("COOKIES_PATH")
     if cookies_path and Path(cookies_path).exists():
         cmd.extend(["--cookies", cookies_path])
 
