@@ -69,13 +69,17 @@ def compute_tonality_score(path: Path, high_min: float, high_max: float, low_max
 
     high_band_energy = np.sum(magnitude[high_band, :], axis=0)
     high_energy = float(np.mean(high_band_energy))
-    high_peak = float(np.max(high_band_energy))
     low_energy = float(np.sum(magnitude[low_band, :]))
 
-    if high_peak <= 0:
+    if high_energy <= 0:
         return 0.0, high_energy, low_energy
 
-    return clamp((high_energy / high_peak) * 100.0), high_energy, low_energy
+    high_energy_db = 10.0 * np.log10(high_energy + 1e-9)
+    min_db = -10.0
+    max_db = 5.0
+    score = clamp(((high_energy_db - min_db) / (max_db - min_db)) * 100.0)
+
+    return score, high_energy, low_energy
 
 
 def main() -> None:
@@ -84,7 +88,7 @@ def main() -> None:
     parser.add_argument("file_b", help="Second MP3 file path")
     parser.add_argument("--start-minute", type=int, default=0)
     parser.add_argument("--duration", type=int, default=60)
-    parser.add_argument("--high-threshold", type=float, default=6000.0)
+    parser.add_argument("--high-threshold", type=float, default=10000.0)
     parser.add_argument("--high-max", type=float, default=21100.0)
     parser.add_argument("--low-max", type=float, default=70.0)
     args = parser.parse_args()
@@ -118,11 +122,14 @@ def main() -> None:
     score_a, high_a, low_a, start_a, end_a = analyze_file(file_a)
     score_b, high_b, low_b, start_b, end_b = analyze_file(file_b)
 
+    high_a_db = 10.0 * np.log10(high_a + 1e-9)
+    high_b_db = 10.0 * np.log10(high_b + 1e-9)
+
     print(
-        f"{file_a.name}: {score_a:.2f}% | high={high_a:.2e} low={low_a:.2e} | segment={start_a}->{end_a} min"
+        f"{file_a.name}: {score_a:.2f}% | high={high_a:.2e} (db={high_a_db:.2f}) low={low_a:.2e} | segment={start_a}->{end_a} min"
     )
     print(
-        f"{file_b.name}: {score_b:.2f}% | high={high_b:.2e} low={low_b:.2e} | segment={start_b}->{end_b} min"
+        f"{file_b.name}: {score_b:.2f}% | high={high_b:.2e} (db={high_b_db:.2f}) low={low_b:.2e} | segment={start_b}->{end_b} min"
     )
 
 

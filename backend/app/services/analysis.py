@@ -44,17 +44,19 @@ def analyze_prosody(mp3_path: str) -> ProsodyScores:
     magnitude = np.abs(stft) ** 2
     freqs = librosa.fft_frequencies(sr=sr)
 
-    high_band = (freqs >= 6000.0) & (freqs <= 21100.0)
+    high_band = (freqs >= 10000.0) & (freqs <= 21100.0)
     low_band = (freqs >= 1.0) & (freqs <= 70.0)
 
     high_band_energy = np.sum(magnitude[high_band, :], axis=0)
     high_energy = float(np.mean(high_band_energy))
-    high_peak = float(np.max(high_band_energy))
 
-    if high_peak <= 0:
+    if high_energy <= 0:
         tonality_score = 0.0
     else:
-        tonality_score = _clamp((high_energy / high_peak) * 100.0)
+        high_energy_db = 10.0 * np.log10(high_energy + 1e-9)
+        min_db = -10.0
+        max_db = 5.0
+        tonality_score = _clamp(((high_energy_db - min_db) / (max_db - min_db)) * 100.0)
 
     return ProsodyScores(
         melody_score=round(melody_score, 2),
