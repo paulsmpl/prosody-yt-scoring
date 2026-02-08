@@ -8,6 +8,8 @@ const resultTemplate = document.getElementById('result-template');
 const uploadForm = document.getElementById('upload-form');
 const uploadFile = document.getElementById('upload-file');
 const uploadMinute = document.getElementById('upload-minute');
+const analyzeProgress = document.getElementById('analyze-progress');
+const uploadProgress = document.getElementById('upload-progress');
 
 const showToast = (message) => {
   toast.textContent = message;
@@ -45,6 +47,31 @@ const buildPayload = () => {
 };
 
 const formatScore = (value) => `${Number(value).toFixed(2)}%`;
+
+const startProgress = (container) => {
+  const bar = container.querySelector('.progress-bar');
+  const label = container.querySelector('.progress-label');
+  const startTime = Date.now();
+  container.style.display = 'flex';
+
+  const timer = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const percent = Math.min((elapsed / 180000) * 100, 100);
+    bar.style.width = `${percent.toFixed(0)}%`;
+    label.textContent = `Analyzing... ${percent.toFixed(0)}%`;
+  }, 500);
+
+  return () => {
+    clearInterval(timer);
+    bar.style.width = '100%';
+    label.textContent = 'Analyzing... 100%';
+    setTimeout(() => {
+      container.style.display = 'none';
+      bar.style.width = '0%';
+      label.textContent = 'Analyzing... 0%';
+    }, 600);
+  };
+};
 
 const createResultCard = (result) => {
   const node = resultTemplate.content.cloneNode(true);
@@ -99,6 +126,7 @@ form.addEventListener('submit', async (event) => {
   }
 
   const submitBtn = form.querySelector('button[type="submit"]');
+  const stopProgress = startProgress(analyzeProgress);
   submitBtn.disabled = true;
   submitBtn.textContent = 'Analyzing...';
 
@@ -119,6 +147,7 @@ form.addEventListener('submit', async (event) => {
   } catch (err) {
     showToast(err.message);
   } finally {
+    stopProgress();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Analyze prosody';
   }
@@ -140,6 +169,7 @@ uploadForm.addEventListener('submit', async (event) => {
   formData.append('start_minute', uploadMinute.value || '10');
 
   const submitBtn = uploadForm.querySelector('button[type="submit"]');
+  const stopProgress = startProgress(uploadProgress);
   submitBtn.disabled = true;
   submitBtn.textContent = 'Analyzing...';
 
@@ -159,6 +189,7 @@ uploadForm.addEventListener('submit', async (event) => {
   } catch (err) {
     showToast(err.message);
   } finally {
+    stopProgress();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Analyze MP3';
   }
