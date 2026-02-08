@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Prosodie • Analyse Polyvagale</title>
+  <title>Prosody • Polyvagal Analysis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,32 +14,32 @@
   <main class="container">
     <header class="hero">
       <div>
-        <p class="eyebrow">Analyse prosodique</p>
-        <h1>Mesurez la prosodie d’une voix YouTube</h1>
-        <p class="subtitle">Déposez un ou plusieurs liens, choisissez la minute à analyser (par défaut 10 → 11), puis obtenez le score de mélodie, de fréquence et la prosodie globale.</p>
+        <p class="eyebrow">Prosodic analysis</p>
+        <h1>Measure prosody from a YouTube voice</h1>
+        <p class="subtitle">Paste one or more links, choose the minute to analyze (default 10 → 11), and get melody, frequency, and overall prosody scores.</p>
       </div>
       <div class="hero-card">
         <div>
-          <h3>Prosodie globale</h3>
-          <p>Combinaison pondérée des scores mélodie et fréquence.</p>
+          <h3>Overall prosody</h3>
+          <p>Weighted blend of melody and frequency scores.</p>
         </div>
-        <div class="pill">Polyvagale • Sécurité</div>
+        <div class="pill">Polyvagal • Safety</div>
       </div>
     </header>
 
     <section class="card">
       <div class="card-header">
         <div>
-          <h2>Vos liens YouTube</h2>
-          <p class="muted">Ajoutez plusieurs liens et ajustez la minute si besoin.</p>
+          <h2>Your YouTube links</h2>
+          <p class="muted">Add multiple links and adjust the minute if needed.</p>
         </div>
-        <button id="add-row" class="btn secondary">Ajouter un lien</button>
+        <button id="add-row" class="btn secondary">Add a link</button>
       </div>
 
       <form id="analyze-form">
         <div id="rows" class="rows"></div>
         <div class="actions">
-          <button type="submit" class="btn primary">Analyser la prosodie</button>
+          <button type="submit" class="btn primary">Analyze prosody</button>
         </div>
       </form>
     </section>
@@ -47,16 +47,16 @@
     <section class="card">
       <div class="card-header">
         <div>
-          <h2>Analyser un MP3 local</h2>
-          <p class="muted">Chargez un fichier audio depuis votre ordinateur.</p>
+          <h2>Analyze local MP3 files</h2>
+          <p class="muted">Upload one or more audio files from your computer.</p>
         </div>
       </div>
 
       <form id="upload-form" class="upload-form">
         <div class="upload-fields">
           <div class="field">
-            <label>Fichier MP3</label>
-            <input type="file" id="upload-file" accept="audio/*" required />
+            <label>MP3 files</label>
+            <input type="file" id="upload-file" accept="audio/*" multiple required />
           </div>
           <div class="field minute">
             <label>Minute</label>
@@ -64,7 +64,7 @@
           </div>
         </div>
         <div class="actions">
-          <button type="submit" class="btn primary">Analyser le MP3</button>
+          <button type="submit" class="btn primary">Analyze MP3</button>
         </div>
       </form>
     </section>
@@ -72,8 +72,8 @@
     <section class="card" id="results-card">
       <div class="card-header">
         <div>
-          <h2>Résultats</h2>
-          <p class="muted">Écoutez le segment MP3 utilisé et partagez les scores.</p>
+          <h2>Results</h2>
+          <p class="muted">Listen to the analyzed MP3 segment and share the scores.</p>
         </div>
       </div>
       <div id="results" class="results"></div>
@@ -83,14 +83,14 @@
   <template id="row-template">
     <div class="row">
       <div class="field">
-        <label>Lien YouTube</label>
+        <label>YouTube link</label>
         <input type="url" placeholder="https://www.youtube.com/watch?v=..." required />
       </div>
       <div class="field minute">
         <label>Minute</label>
         <input type="number" min="0" max="600" value="10" />
       </div>
-      <button type="button" class="btn ghost remove">Retirer</button>
+      <button type="button" class="btn ghost remove">Remove</button>
     </div>
   </template>
 
@@ -101,19 +101,19 @@
           <h3 class="result-title"></h3>
           <p class="muted result-subtitle"></p>
         </div>
-        <button class="btn secondary share">Partager</button>
+        <button class="btn secondary share">Share</button>
       </div>
       <div class="score-grid">
         <div class="score">
-          <span>Mélodie</span>
+          <span>Melody</span>
           <strong class="melody"></strong>
         </div>
         <div class="score">
-          <span>Fréquence</span>
+          <span>Frequency</span>
           <strong class="frequency"></strong>
         </div>
         <div class="score highlight">
-          <span>Prosodie globale</span>
+          <span>Overall prosody</span>
           <strong class="combined"></strong>
         </div>
       </div>

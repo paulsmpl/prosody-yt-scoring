@@ -58,28 +58,28 @@ const createResultCard = (result) => {
   const shareBtn = node.querySelector('.share');
 
   title.textContent = result.url;
-  subtitle.textContent = `Segment analysé : ${result.start_minute} → ${result.end_minute} min`;
+  subtitle.textContent = `Analyzed segment: ${result.start_minute} → ${result.end_minute} min`;
   melody.textContent = formatScore(result.melody_score);
   frequency.textContent = formatScore(result.frequency_score);
   combined.textContent = formatScore(result.combined_score);
   audio.src = result.audio_url;
 
   shareBtn.addEventListener('click', async () => {
-    const text = `Résultat prosodie\n${result.url}\nMélodie: ${formatScore(result.melody_score)}\nFréquence: ${formatScore(result.frequency_score)}\nProsodie globale: ${formatScore(result.combined_score)}`;
+    const text = `Prosody results\n${result.url}\nMelody: ${formatScore(result.melody_score)}\nFrequency: ${formatScore(result.frequency_score)}\nOverall prosody: ${formatScore(result.combined_score)}`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Prosodie', text, url: window.location.href });
+        await navigator.share({ title: 'Prosody', text, url: window.location.href });
       } catch (err) {
-        showToast('Partage annulé.');
+        showToast('Share cancelled.');
       }
       return;
     }
 
     try {
       await navigator.clipboard.writeText(text);
-      showToast('Résultat copié dans le presse-papiers.');
+      showToast('Result copied to clipboard.');
     } catch (err) {
-      showToast('Impossible de copier le résultat.');
+      showToast('Unable to copy result.');
     }
   });
 
@@ -96,13 +96,13 @@ form.addEventListener('submit', async (event) => {
 
   const payload = buildPayload();
   if (!payload.items.length) {
-    showToast('Ajoutez au moins un lien.');
+    showToast('Add at least one link.');
     return;
   }
 
   const submitBtn = form.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Analyse en cours...';
+  submitBtn.textContent = 'Analyzing...';
 
   try {
     const response = await fetch('/analyze', {
@@ -113,7 +113,7 @@ form.addEventListener('submit', async (event) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Erreur lors de l’analyse.');
+      throw new Error(error.detail || 'Analysis error.');
     }
 
     const data = await response.json();
@@ -122,7 +122,7 @@ form.addEventListener('submit', async (event) => {
     showToast(err.message);
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Analyser la prosodie';
+    submitBtn.textContent = 'Analyze prosody';
   }
 });
 
@@ -131,17 +131,19 @@ uploadForm.addEventListener('submit', async (event) => {
   resultsEl.innerHTML = '';
 
   if (!uploadFile.files.length) {
-    showToast('Choisissez un fichier audio.');
+    showToast('Choose at least one audio file.');
     return;
   }
 
   const formData = new FormData();
-  formData.append('file', uploadFile.files[0]);
+  Array.from(uploadFile.files).forEach((file) => {
+    formData.append('files', file);
+  });
   formData.append('start_minute', uploadMinute.value || '10');
 
   const submitBtn = uploadForm.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Analyse en cours...';
+  submitBtn.textContent = 'Analyzing...';
 
   try {
     const response = await fetch('/analyze-upload', {
@@ -151,7 +153,7 @@ uploadForm.addEventListener('submit', async (event) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Erreur lors de l’analyse.');
+      throw new Error(error.detail || 'Analysis error.');
     }
 
     const data = await response.json();
@@ -160,6 +162,6 @@ uploadForm.addEventListener('submit', async (event) => {
     showToast(err.message);
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Analyser le MP3';
+    submitBtn.textContent = 'Analyze MP3';
   }
 });
