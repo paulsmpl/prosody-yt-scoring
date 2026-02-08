@@ -16,12 +16,12 @@
       <div>
         <p class="eyebrow">Prosodic analysis</p>
         <h1>Measure prosody from a YouTube voice</h1>
-        <p class="subtitle">Paste one or more links, choose the minute to analyze (default 10 → 11), and get the melody score.</p>
+        <p class="subtitle">Paste one or more links, choose the minute to analyze (default 10 → 11), and get the melody and tonality scores.</p>
       </div>
       <div class="hero-card">
         <div>
-          <h3>Melody score</h3>
-          <p>Measures vocal melodic variation in the selected segment.</p>
+          <h3>Voice scores</h3>
+          <p>Melody variation + tonality based on high vs low frequency energy.</p>
         </div>
         <div class="pill">Polyvagal • Safety</div>
       </div>
@@ -31,7 +31,7 @@
       <div class="card-header">
         <div>
           <h2>Your YouTube links</h2>
-          <p class="muted">Add multiple links and adjust the minute if needed.</p>
+          <p class="muted">If the video is too short, we automatically analyze the first minute.</p>
         </div>
         <button id="add-row" class="btn secondary">Add a link</button>
       </div>
@@ -48,7 +48,7 @@
       <div class="card-header">
         <div>
           <h2>Analyze local MP3 files</h2>
-          <p class="muted">Upload one or more audio files from your computer.</p>
+          <p class="muted">Upload one or more audio files. If too short, the first minute is used.</p>
         </div>
       </div>
 
@@ -107,6 +107,10 @@
         <div class="score highlight">
           <span>Melody</span>
           <strong class="melody"></strong>
+        </div>
+        <div class="score">
+          <span>Tonality</span>
+          <strong class="tonality"></strong>
         </div>
       </div>
       <div class="audio">

@@ -52,16 +52,18 @@ const createResultCard = (result) => {
   const title = node.querySelector('.result-title');
   const subtitle = node.querySelector('.result-subtitle');
   const melody = node.querySelector('.melody');
+  const tonality = node.querySelector('.tonality');
   const audio = node.querySelector('audio');
   const shareBtn = node.querySelector('.share');
 
   title.textContent = result.url;
   subtitle.textContent = `Analyzed segment: ${result.start_minute} → ${result.end_minute} min`;
   melody.textContent = formatScore(result.melody_score);
+  tonality.textContent = formatScore(result.tonality_score);
   audio.src = result.audio_url;
 
   shareBtn.addEventListener('click', async () => {
-    const text = `Prosody results\n${result.url}\nMelody: ${formatScore(result.melody_score)}`;
+    const text = `Prosody results\n${result.url}\nMelody: ${formatScore(result.melody_score)}\nTonality: ${formatScore(result.tonality_score)}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Prosody', text, url: window.location.href });

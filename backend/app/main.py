@@ -9,7 +9,7 @@ import os
 
 from app.schemas import AnalyzeRequest, AnalyzeResponse, AnalyzeResult
 from app.services.downloader import download_audio
-from app.services.audio import extract_segment_to_mp3
+from app.services.audio import extract_segment_to_mp3, get_audio_duration_seconds
 from app.services.analysis import analyze_prosody
 
 
@@ -46,6 +46,10 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
 
         try:
             source_path = download_audio(str(item.url), job_dir)
+            duration = get_audio_duration_seconds(source_path)
+            if duration is not None and duration < (start_seconds + SEGMENT_DURATION_SECONDS):
+                start_seconds = 0
+                end_minute = 1
             output_mp3 = job_dir / "segment.mp3"
             extract_segment_to_mp3(
                 input_path=source_path,
@@ -61,9 +65,10 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         results.append(
             AnalyzeResult(
                 url=item.url,
-                start_minute=item.start_minute,
+                start_minute=(0 if start_seconds == 0 else item.start_minute),
                 end_minute=end_minute,
                 melody_score=scores.melody_score,
+                tonality_score=scores.tonality_score,
                 audio_url=audio_url,
             )
         )
@@ -92,6 +97,11 @@ async def analyze_upload(
                 buffer.write(content)
 
             start_seconds = start_minute * 60
+            end_minute = start_minute + 1
+            duration = get_audio_duration_seconds(raw_path)
+            if duration is not None and duration < (start_seconds + SEGMENT_DURATION_SECONDS):
+                start_seconds = 0
+                end_minute = 1
             output_mp3 = job_dir / "segment.mp3"
             extract_segment_to_mp3(
                 input_path=raw_path,
@@ -107,9 +117,10 @@ async def analyze_upload(
         results.append(
             AnalyzeResult(
                 url=upload.filename or "upload",
-                start_minute=start_minute,
-                end_minute=start_minute + 1,
+                start_minute=(0 if start_seconds == 0 else start_minute),
+                end_minute=end_minute,
                 melody_score=scores.melody_score,
+                tonality_score=scores.tonality_score,
                 audio_url=audio_url,
             )
         )

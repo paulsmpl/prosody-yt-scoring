@@ -16,6 +16,7 @@ class AnalyzeResult(BaseModel):
     start_minute: int
     end_minute: int
     melody_score: float
+    tonality_score: float
     audio_url: str
 
 
