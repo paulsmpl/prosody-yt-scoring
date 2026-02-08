@@ -12,6 +12,8 @@ def download_audio(url: str, output_dir: Path) -> Path:
         "-f",
         "bestaudio/best",
         "--no-playlist",
+        "--extractor-args",
+        "youtube:player_client=android",
         "-o",
         str(output_template),
         url,
@@ -20,6 +22,10 @@ def download_audio(url: str, output_dir: Path) -> Path:
     cookies_path = os.getenv("COOKIES_PATH")
     if cookies_path and Path(cookies_path).exists():
         cmd.extend(["--cookies", cookies_path])
+
+    extra_args = os.getenv("YTDLP_ARGS")
+    if extra_args:
+        cmd.extend(extra_args.split())
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:

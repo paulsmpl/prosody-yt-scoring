@@ -10,3 +10,4 @@ services:
       - WEIGHT_MELODY=0.5
       - WEIGHT_FREQUENCY=0.5
       - COOKIES_PATH=/app/app/storage/cookies.txt
+      - YTDLP_ARGS=
