@@ -14,6 +14,8 @@ def download_audio(url: str, output_dir: Path) -> Path:
         "--no-playlist",
         "--extractor-args",
         "youtube:player_client=android",
+        "--print",
+        "after_move:filepath",
         "-o",
         str(output_template),
         url,
@@ -30,6 +32,12 @@ def download_audio(url: str, output_dir: Path) -> Path:
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "Téléchargement échoué.")
+
+    stdout_lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    for line in reversed(stdout_lines):
+        path = Path(line)
+        if path.exists():
+            return path
 
     candidates = list(output_dir.glob("source.*"))
     if not candidates:
