@@ -35,7 +35,8 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 if [ ! -d "/etc/letsencrypt/live/${DOMAIN}" ]; then
-  sudo certbot --nginx -d "$DOMAIN"
+  sudo systemctl stop nginx || true
+  sudo certbot certonly --standalone --http-01-port 8080 -d "$DOMAIN"
 fi
 
 sudo cp "$NGINX_SSL_CONF" "$NGINX_AVAILABLE"
