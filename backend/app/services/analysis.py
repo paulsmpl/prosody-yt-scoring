@@ -41,9 +41,10 @@ def analyze_prosody(mp3_path: str, weight_melody: float, weight_frequency: float
     coeff_var = std_f0 / max(mean_f0, 1e-6)
     melody_score = _clamp((coeff_var / 0.35) * 100.0)
 
-    target_f0 = 180.0
-    freq_distance = abs(mean_f0 - target_f0) / target_f0
-    frequency_score = _clamp(100.0 - (freq_distance * 100.0))
+    min_f0 = 80.0
+    max_f0 = 300.0
+    normalized_f0 = (mean_f0 - min_f0) / (max_f0 - min_f0)
+    frequency_score = _clamp(normalized_f0 * 100.0)
 
     combined = _clamp((melody_score * weight_melody) + (frequency_score * weight_frequency))
 
