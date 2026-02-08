@@ -20,8 +20,6 @@ STATIC_DIR = BASE_DIR / "static"
 DEFAULT_STORAGE_DIR = BASE_DIR / "storage"
 STORAGE_DIR = Path(os.getenv("STORAGE_DIR", DEFAULT_STORAGE_DIR))
 
-WEIGHT_MELODY = float(os.getenv("WEIGHT_MELODY", "0.5"))
-WEIGHT_FREQUENCY = float(os.getenv("WEIGHT_FREQUENCY", "0.5"))
 SEGMENT_DURATION_SECONDS = 60
 
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -55,7 +53,7 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 start_seconds=start_seconds,
                 duration_seconds=SEGMENT_DURATION_SECONDS,
             )
-            scores = analyze_prosody(str(output_mp3), WEIGHT_MELODY, WEIGHT_FREQUENCY)
+            scores = analyze_prosody(str(output_mp3))
         except Exception as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -66,8 +64,6 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 start_minute=item.start_minute,
                 end_minute=end_minute,
                 melody_score=scores.melody_score,
-                frequency_score=scores.frequency_score,
-                combined_score=scores.combined_score,
                 audio_url=audio_url,
             )
         )
@@ -103,7 +99,7 @@ async def analyze_upload(
                 start_seconds=start_seconds,
                 duration_seconds=SEGMENT_DURATION_SECONDS,
             )
-            scores = analyze_prosody(str(output_mp3), WEIGHT_MELODY, WEIGHT_FREQUENCY)
+            scores = analyze_prosody(str(output_mp3))
         except Exception as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -114,8 +110,6 @@ async def analyze_upload(
                 start_minute=start_minute,
                 end_minute=start_minute + 1,
                 melody_score=scores.melody_score,
-                frequency_score=scores.frequency_score,
-                combined_score=scores.combined_score,
                 audio_url=audio_url,
             )
         )
