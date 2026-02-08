@@ -44,7 +44,7 @@ def analyze_prosody(mp3_path: str) -> ProsodyScores:
     magnitude = np.abs(stft) ** 2
     freqs = librosa.fft_frequencies(sr=sr)
 
-    high_band = (freqs >= 5500.0) & (freqs <= 21100.0)
+    high_band = (freqs >= 14500.0) & (freqs <= 21100.0)
     low_band = (freqs >= 1.0) & (freqs <= 70.0)
 
     high_energy = float(np.sum(magnitude[high_band, :]))
