@@ -5,6 +5,9 @@ const resultsEl = document.getElementById('results');
 const toast = document.getElementById('toast');
 const rowTemplate = document.getElementById('row-template');
 const resultTemplate = document.getElementById('result-template');
+const uploadForm = document.getElementById('upload-form');
+const uploadFile = document.getElementById('upload-file');
+const uploadMinute = document.getElementById('upload-minute');
 
 const showToast = (message) => {
   toast.textContent = message;
@@ -120,5 +123,43 @@ form.addEventListener('submit', async (event) => {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Analyser la prosodie';
+  }
+});
+
+uploadForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  resultsEl.innerHTML = '';
+
+  if (!uploadFile.files.length) {
+    showToast('Choisissez un fichier audio.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', uploadFile.files[0]);
+  formData.append('start_minute', uploadMinute.value || '10');
+
+  const submitBtn = uploadForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Analyse en cours...';
+
+  try {
+    const response = await fetch('/analyze-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Erreur lors de l’analyse.');
+    }
+
+    const data = await response.json();
+    data.results.forEach(createResultCard);
+  } catch (err) {
+    showToast(err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Analyser le MP3';
   }
 });

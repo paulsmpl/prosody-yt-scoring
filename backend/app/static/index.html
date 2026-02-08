@@ -44,6 +44,31 @@
       </form>
     </section>
 
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Analyser un MP3 local</h2>
+          <p class="muted">Chargez un fichier audio depuis votre ordinateur.</p>
+        </div>
+      </div>
+
+      <form id="upload-form" class="upload-form">
+        <div class="upload-fields">
+          <div class="field">
+            <label>Fichier MP3</label>
+            <input type="file" id="upload-file" accept="audio/*" required />
+          </div>
+          <div class="field minute">
+            <label>Minute</label>
+            <input type="number" id="upload-minute" min="0" max="600" value="10" />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn primary">Analyser le MP3</button>
+        </div>
+      </form>
+    </section>
+
     <section class="card" id="results-card">
       <div class="card-header">
         <div>

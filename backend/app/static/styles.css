@@ -124,6 +124,21 @@ body {
   border-radius: 16px;
 }
 
+.upload-form {
+  display: grid;
+  gap: 12px;
+}
+
+.upload-fields {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: 16px;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -264,6 +279,10 @@ body {
   }
 
   .row {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-fields {
     grid-template-columns: 1fr;
   }
 

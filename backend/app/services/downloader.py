@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import subprocess
 
 
@@ -15,6 +16,10 @@ def download_audio(url: str, output_dir: Path) -> Path:
         str(output_template),
         url,
     ]
+
+    cookies_path = os.getenv("COOKIES_PATH")
+    if cookies_path and Path(cookies_path).exists():
+        cmd.extend(["--cookies", cookies_path])
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:

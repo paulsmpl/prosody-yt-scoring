@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -73,3 +73,47 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         )
 
     return AnalyzeResponse(results=results)
+
+
+@app.post("/analyze-upload", response_model=AnalyzeResponse)
+async def analyze_upload(
+    file: UploadFile = File(...),
+    start_minute: int = Form(10),
+) -> AnalyzeResponse:
+    if start_minute < 0 or start_minute > 600:
+        raise HTTPException(status_code=400, detail="Minute invalide.")
+
+    job_id = uuid4().hex
+    job_dir = STORAGE_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        raw_path = job_dir / f"upload_{file.filename or 'audio'}"
+        with raw_path.open("wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+
+        start_seconds = start_minute * 60
+        output_mp3 = job_dir / "segment.mp3"
+        extract_segment_to_mp3(
+            input_path=raw_path,
+            output_path=output_mp3,
+            start_seconds=start_seconds,
+            duration_seconds=SEGMENT_DURATION_SECONDS,
+        )
+        scores = analyze_prosody(str(output_mp3), WEIGHT_MELODY, WEIGHT_FREQUENCY)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    audio_url = f"/audio/{job_id}/segment.mp3"
+    result = AnalyzeResult(
+        url="upload://local-file",
+        start_minute=start_minute,
+        end_minute=start_minute + 1,
+        melody_score=scores.melody_score,
+        frequency_score=scores.frequency_score,
+        combined_score=scores.combined_score,
+        audio_url=audio_url,
+    )
+
+    return AnalyzeResponse(results=[result])
