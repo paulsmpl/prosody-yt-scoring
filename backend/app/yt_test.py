@@ -16,7 +16,7 @@ def run_cmd(cmd: list[str]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Test yt-dlp with cookies.")
     parser.add_argument("url", help="YouTube URL to test")
-    parser.add_argument("--cookies", default="backend/app/storage/cookies.txt")
+    parser.add_argument("--cookies", default="/app/app/storage/cookies.txt")
     parser.add_argument("--client", default="android", choices=["android", "web", "mweb", "ios"])
     parser.add_argument("--list", action="store_true", help="List formats only")
     args = parser.parse_args()
