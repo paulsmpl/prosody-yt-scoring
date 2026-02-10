@@ -25,6 +25,10 @@ def main() -> None:
     if not cookies_path.exists():
         raise SystemExit(f"Cookies file not found: {cookies_path}")
 
+    client = args.client
+    if cookies_path.exists():
+        client = "web"
+
     base = [
         sys.executable,
         "-m",
@@ -33,7 +37,7 @@ def main() -> None:
         "--cookies",
         str(cookies_path),
         "--extractor-args",
-        f"youtube:player_client={args.client}",
+        f"youtube:player_client={client}",
     ]
 
     if args.list:
