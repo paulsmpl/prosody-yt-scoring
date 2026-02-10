@@ -38,25 +38,37 @@ def analyze_prosody(mp3_path: str) -> ProsodyScores:
     std_f0 = float(np.std(voiced))
 
     coeff_var = std_f0 / max(mean_f0, 1e-6)
-    melody_score = _clamp((coeff_var / 0.35) * 100.0)
+    melody_max_cv = 0.6
+    melody_score = _clamp((coeff_var / melody_max_cv) * 100.0)
 
     stft = librosa.stft(y)
     magnitude = np.abs(stft) ** 2
     freqs = librosa.fft_frequencies(sr=sr)
 
-    high_band = (freqs >= 10000.0) & (freqs <= 21100.0)
+    high_min = 10000.0
+    high_max = 21100.0
+    mid_min = 4000.0
+    mid_weight = 0.1
+    min_db = 0.0
+    max_db = 20.0
+
+    high_band = (freqs >= high_min) & (freqs <= high_max)
+    mid_band = (freqs >= mid_min) & (freqs < high_min)
     low_band = (freqs >= 1.0) & (freqs <= 70.0)
 
     high_band_energy = np.sum(magnitude[high_band, :], axis=0)
-    high_energy = float(np.mean(high_band_energy))
+    mid_band_energy = np.sum(magnitude[mid_band, :], axis=0)
 
-    if high_energy <= 0:
+    high_energy = float(np.mean(high_band_energy))
+    mid_energy = float(np.mean(mid_band_energy))
+    low_energy = float(np.sum(magnitude[low_band, :]))
+
+    weighted_energy = high_energy + (mid_weight * mid_energy)
+    if weighted_energy <= 0:
         tonality_score = 0.0
     else:
-        high_energy_db = 10.0 * np.log10(high_energy + 1e-9)
-        min_db = -10.0
-        max_db = 5.0
-        tonality_score = _clamp(((high_energy_db - min_db) / (max_db - min_db)) * 100.0)
+        weighted_db = 10.0 * np.log10(weighted_energy + 1e-9)
+        tonality_score = _clamp(((weighted_db - min_db) / (max_db - min_db)) * 100.0)
 
     return ProsodyScores(
         melody_score=round(melody_score, 2),

@@ -10,6 +10,26 @@ def clamp(value: float, minimum: float = 0.0, maximum: float = 100.0) -> float:
     return float(max(minimum, min(maximum, value)))
 
 
+def compute_melody_score(y: np.ndarray, sr: int, max_cv: float) -> float:
+    f0, _, _ = librosa.pyin(
+        y,
+        fmin=librosa.note_to_hz("C2"),
+        fmax=librosa.note_to_hz("C7"),
+    )
+
+    if f0 is None:
+        return 0.0
+
+    voiced = f0[~np.isnan(f0)]
+    if voiced.size == 0:
+        return 0.0
+
+    mean_f0 = float(np.mean(voiced))
+    std_f0 = float(np.std(voiced))
+    coeff_var = std_f0 / max(mean_f0, 1e-6)
+    return clamp((coeff_var / max_cv) * 100.0)
+
+
 def get_audio_duration_seconds(input_path: Path) -> float | None:
     cmd = [
         "ffprobe",
@@ -55,51 +75,73 @@ def extract_segment_to_mp3(input_path: Path, output_path: Path, start_seconds: i
         raise RuntimeError(result.stderr.strip() or "Audio extraction failed.")
 
 
-def compute_tonality_score(path: Path, high_min: float, high_max: float, low_max: float) -> tuple[float, float, float]:
+def compute_tonality_score(
+    path: Path,
+    high_min: float,
+    high_max: float,
+    mid_min: float,
+    mid_max: float,
+    mid_weight: float,
+    low_max: float,
+    min_db: float,
+    max_db: float,
+) -> tuple[float, float, float, float]:
     y, sr = librosa.load(path, sr=22050, mono=True)
     if y.size == 0:
-        return 0.0, 0.0, 0.0
+        return 0.0, 0.0, 0.0, 0.0
 
     stft = librosa.stft(y)
     magnitude = np.abs(stft) ** 2
     freqs = librosa.fft_frequencies(sr=sr)
 
     high_band = (freqs >= high_min) & (freqs <= high_max)
+    mid_band = (freqs >= mid_min) & (freqs < high_min)
     low_band = (freqs >= 1.0) & (freqs <= low_max)
 
     high_band_energy = np.sum(magnitude[high_band, :], axis=0)
+    mid_band_energy = np.sum(magnitude[mid_band, :], axis=0)
+
     high_energy = float(np.mean(high_band_energy))
+    mid_energy = float(np.mean(mid_band_energy))
     low_energy = float(np.sum(magnitude[low_band, :]))
 
-    if high_energy <= 0:
-        return 0.0, high_energy, low_energy
+    weighted_energy = high_energy + (mid_weight * mid_energy)
+    if weighted_energy <= 0:
+        return 0.0, high_energy, mid_energy, low_energy
 
-    high_energy_db = 10.0 * np.log10(high_energy + 1e-9)
-    min_db = -10.0
-    max_db = 5.0
+    high_energy_db = 10.0 * np.log10(weighted_energy + 1e-9)
     score = clamp(((high_energy_db - min_db) / (max_db - min_db)) * 100.0)
 
-    return score, high_energy, low_energy
+    return score, high_energy, mid_energy, low_energy
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare tonality scores for two MP3 files.")
-    parser.add_argument("file_a", help="First MP3 file path")
-    parser.add_argument("file_b", help="Second MP3 file path")
+    parser.add_argument("paths", nargs="+", help="MP3 file(s) or a folder path")
     parser.add_argument("--start-minute", type=int, default=0)
     parser.add_argument("--duration", type=int, default=60)
     parser.add_argument("--high-threshold", type=float, default=10000.0)
     parser.add_argument("--high-max", type=float, default=21100.0)
+    parser.add_argument("--mid-threshold", type=float, default=4000.0)
+    parser.add_argument("--mid-weight", type=float, default=0.1)
     parser.add_argument("--low-max", type=float, default=70.0)
+    parser.add_argument("--min-db", type=float, default=0.0)
+    parser.add_argument("--max-db", type=float, default=20.0)
+    parser.add_argument("--melody-max-cv", type=float, default=0.6)
     args = parser.parse_args()
 
-    file_a = Path(args.file_a)
-    file_b = Path(args.file_b)
+    input_paths = [Path(p) for p in args.paths]
+    if len(input_paths) == 1 and input_paths[0].is_dir():
+        files = sorted(input_paths[0].glob("*.mp3"))
+    else:
+        files = input_paths
 
-    if not file_a.exists():
-        raise SystemExit(f"File not found: {file_a}")
-    if not file_b.exists():
-        raise SystemExit(f"File not found: {file_b}")
+    if not files:
+        raise SystemExit("No MP3 files found.")
+
+    for path in files:
+        if not path.exists():
+            raise SystemExit(f"File not found: {path}")
 
     def analyze_file(path: Path) -> tuple[float, float, float, int, int]:
         start_seconds = args.start_minute * 60
@@ -111,26 +153,28 @@ def main() -> None:
         with tempfile.TemporaryDirectory() as tmp:
             segment = Path(tmp) / "segment.mp3"
             extract_segment_to_mp3(path, segment, start_seconds, args.duration)
-            score, high_energy, low_energy = compute_tonality_score(
+            score, high_energy, mid_energy, low_energy = compute_tonality_score(
                 segment,
                 high_min=args.high_threshold,
                 high_max=args.high_max,
+                mid_min=args.mid_threshold,
+                mid_max=args.high_threshold,
+                mid_weight=args.mid_weight,
                 low_max=args.low_max,
+                min_db=args.min_db,
+                max_db=args.max_db,
             )
-            return score, high_energy, low_energy, int(start_seconds // 60), int(end_minute)
+            y_segment, sr_segment = librosa.load(segment, sr=22050, mono=True)
+            melody = compute_melody_score(y_segment, sr_segment, args.melody_max_cv)
+            return score, high_energy, mid_energy, low_energy, melody, int(start_seconds // 60), int(end_minute)
 
-    score_a, high_a, low_a, start_a, end_a = analyze_file(file_a)
-    score_b, high_b, low_b, start_b, end_b = analyze_file(file_b)
-
-    high_a_db = 10.0 * np.log10(high_a + 1e-9)
-    high_b_db = 10.0 * np.log10(high_b + 1e-9)
-
-    print(
-        f"{file_a.name}: {score_a:.2f}% | high={high_a:.2e} (db={high_a_db:.2f}) low={low_a:.2e} | segment={start_a}->{end_a} min"
-    )
-    print(
-        f"{file_b.name}: {score_b:.2f}% | high={high_b:.2e} (db={high_b_db:.2f}) low={low_b:.2e} | segment={start_b}->{end_b} min"
-    )
+    for path in files:
+        score, high, mid, low, melody, start_min, end_min = analyze_file(path)
+        weighted_energy = high + (args.mid_weight * mid)
+        weighted_db = 10.0 * np.log10(weighted_energy + 1e-9)
+        print(
+            f"{path.name}: tonality={score:.2f}% melody={melody:.2f}% | high={high:.2e} mid={mid:.2e} (w={args.mid_weight}) db={weighted_db:.2f} low={low:.2e} | segment={start_min}->{end_min} min"
+        )
 
 
 if __name__ == "__main__":

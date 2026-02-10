@@ -73,13 +73,15 @@ const startProgress = (container) => {
   };
 };
 
-const createResultCard = (result) => {
+const createResultCard = (result, rank) => {
   const node = resultTemplate.content.cloneNode(true);
   const container = node.querySelector('.result');
   const title = node.querySelector('.result-title');
   const subtitle = node.querySelector('.result-subtitle');
   const melody = node.querySelector('.melody');
   const tonality = node.querySelector('.tonality');
+  const combined = node.querySelector('.combined');
+  const rankBadge = node.querySelector('.result-rank');
   const audio = node.querySelector('audio');
   const shareBtn = node.querySelector('.share');
 
@@ -87,10 +89,18 @@ const createResultCard = (result) => {
   subtitle.textContent = `Analyzed segment: ${result.start_minute} → ${result.end_minute} min`;
   melody.textContent = formatScore(result.melody_score);
   tonality.textContent = formatScore(result.tonality_score);
+  combined.textContent = formatScore(result.total_score);
   audio.src = result.audio_url;
 
+  if (rank === 1) {
+    rankBadge.classList.add('winner');
+    rankBadge.textContent = '🏆 Winner #1';
+  } else {
+    rankBadge.textContent = `#${rank}`;
+  }
+
   shareBtn.addEventListener('click', async () => {
-    const text = `Prosody results\n${result.url}\nMelody: ${formatScore(result.melody_score)}\nTonality: ${formatScore(result.tonality_score)}`;
+    const text = `Prosody results\n${result.url}\nMelody: ${formatScore(result.melody_score)}\nTonality: ${formatScore(result.tonality_score)}\nTotal: ${formatScore(result.total_score)}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Prosody', text, url: window.location.href });
@@ -143,7 +153,14 @@ form.addEventListener('submit', async (event) => {
     }
 
     const data = await response.json();
-    data.results.forEach(createResultCard);
+    const ranked = data.results
+      .map((item) => ({
+        ...item,
+        total_score: (Number(item.melody_score) + Number(item.tonality_score)) / 2,
+      }))
+      .sort((a, b) => b.total_score - a.total_score);
+
+    ranked.forEach((item, index) => createResultCard(item, index + 1));
   } catch (err) {
     showToast(err.message);
   } finally {
@@ -185,7 +202,14 @@ uploadForm.addEventListener('submit', async (event) => {
     }
 
     const data = await response.json();
-    data.results.forEach(createResultCard);
+    const ranked = data.results
+      .map((item) => ({
+        ...item,
+        total_score: (Number(item.melody_score) + Number(item.tonality_score)) / 2,
+      }))
+      .sort((a, b) => b.total_score - a.total_score);
+
+    ranked.forEach((item, index) => createResultCard(item, index + 1));
   } catch (err) {
     showToast(err.message);
   } finally {
